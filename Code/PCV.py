@@ -7,7 +7,25 @@ elapsed_time = current_time - start_time
 seconds = 0
 
 
+def findPath():
+    """Runs the Nearest Neighbour and Refine the result path using 2-OPT strategy"""
+    global seconds
+    fileName = input('ARCHIVE NAME: ')
+    file = open(fileName, 'r')
+    seconds = int(input('EXECUTION TIME LIMIT (s): '))
+
+    adjList = BasicDimacs.AdjacencyList(file)
+
+    path = nearestNeighbour(adjList)
+    path = twoOpt(path, adjList)
+
+    print(path)
+    pathCost(path, adjList)
+    file.close()
+
+
 def nearestNeighbour(adjList):
+    """Runs the Nearest Neighbour algorithm to a given graph"""
     global current_time
     global elapsed_time
     global start_time
@@ -41,7 +59,45 @@ def nearestNeighbour(adjList):
     return path
 
 
-def diferenceCost(adjList, a, b, c, d):
+def twoOpt(path, adjList):
+    """Runs the 2-OPT refine strategy to a given path of a given graph"""
+    global current_time
+    global elapsed_time
+
+    current_time = time.time()
+    elapsed_time = current_time - start_time
+    best = path
+    improved = True
+
+    while improved and (elapsed_time < seconds):
+        improved = False
+        if elapsed_time > seconds:
+            print(f"ITERATION FINISHED IN:  {int(elapsed_time)} seconds.")
+            break
+
+        for i in range(1, len(path) - 2):
+            for j in range(i + 1, len(path)):
+                if j - i == 1:
+                    continue
+
+                a = best[i - 1]
+                b = best[i]
+                c = best[j - 1]
+                d = best[j]
+
+                if differenceCost(adjList, a, b, c, d) < 0:
+                    best[i:j] = best[j - 1: i - 1: -1]
+                    improved = True
+
+        path = best
+        current_time = time.time()
+        elapsed_time = current_time - start_time
+
+    return best
+
+
+def differenceCost(adjList, a, b, c, d):
+    """Calculates the cost difference between two sets of nodes"""
     ac = 0
     bd = 0
     ab = 0
@@ -71,43 +127,8 @@ def diferenceCost(adjList, a, b, c, d):
     return result
 
 
-def twoOpt(path, adjList):
-    global current_time
-    global elapsed_time
-
-    current_time = time.time()
-    elapsed_time = current_time - start_time
-    best = path
-    improved = True
-
-    while improved and (elapsed_time < seconds):
-        improved = False
-        if elapsed_time > seconds:
-            print(f"ITERATION FINISHED IN:  {int(elapsed_time)} seconds.")
-            break
-
-        for i in range(1, len(path) - 2):
-            for j in range(i + 1, len(path)):
-                if j - i == 1:
-                    continue
-
-                a = best[i - 1]
-                b = best[i]
-                c = best[j - 1]
-                d = best[j]
-
-                if diferenceCost(adjList, a, b, c, d) < 0:
-                    best[i:j] = best[j - 1: i - 1: -1]
-                    improved = True
-
-        path = best
-        current_time = time.time()
-        elapsed_time = current_time - start_time
-
-    return best
-
-
 def pathCost(path, adjList):
+    """Calculates the total cost of a given path of a given graph"""
     cost = 0
     first = True
     for u in range(len(path)):
@@ -132,19 +153,3 @@ def pathCost(path, adjList):
     file.write(str(path))
     file.close()
     return cost
-
-
-def findPath():
-    global seconds
-    fileName = input("ARCHIVE NAME: ")
-    file = open(fileName, 'r')
-    seconds = int(input("EXECUTION TIME LIMIT (s): "))
-
-    adjList = BasicDimacs.AdjacencyList(file)
-
-    path = nearestNeighbour(adjList)
-    path = twoOpt(path, adjList)
-
-    print(path)
-    pathCost(path, adjList)
-    file.close()
