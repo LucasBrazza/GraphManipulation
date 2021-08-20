@@ -1,59 +1,150 @@
-def NearestNeighbour(adjList):
-    u = (0, 0.0)
+import BasicDimacs
+import time
+
+start_time = time.time()
+current_time = time.time()
+elapsed_time = current_time - start_time
+seconds = 0
+
+
+def nearestNeighbour(adjList):
+    global current_time
+    global elapsed_time
+    global start_time
+
+    start_time = time.time()
+    current_time = time.time()
+    elapsed_time = current_time - start_time
+
+    u = (0)
     path = [u]
-    nVisitados = [i for i in range(len(adjList))]
-    nVisitados.pop(0)
-    lesserNode = None
+    notVisited = [i for i in range(len(adjList))]
+    notVisited.pop(0)
+    smallerNode = None
 
-    while nVisitados:
-        pesoMenor = float('inf')
-        for node in adjList[u[0]]:
-            if node[0] in nVisitados:
-                pesoAtual = node[1]
-                if pesoMenor > pesoAtual:
-                    pesoMenor = pesoAtual
-                    lesserNode = node[0]
+    while notVisited and (elapsed_time < seconds):
+        smallerWeight = float('inf')
+        for node in adjList[u]:
+            if node[0] in notVisited:
+                currentWeight = node[1]
+                if smallerWeight > currentWeight:
+                    smallerWeight = currentWeight
+                    smallerNode = node[0]
 
-        path.append((lesserNode, pesoMenor))
-        nVisitados.remove(lesserNode)
-        u = (lesserNode, pesoMenor)
+        path.append(smallerNode)
+        notVisited.remove(smallerNode)
+        u = smallerNode
+        current_time = time.time()
+        elapsed_time = current_time - start_time
 
-    path.append(adjList[lesserNode][0])
+    path.append(adjList[smallerNode][0][0])
     return path
 
 
-def diferenceCost(zdjList, a, b, c, d):
-    print('aaaaaaaaaaaa')
-    print(zdjList[a][c-1][1])
-    print(zdjList[b][d-1][1])
-    print(zdjList[a][b-1][1])
-    print(zdjList[c][d-1][1])
-    result = (zdjList[a][c-1][1] + zdjList[b][d-1][1]) - (zdjList[a][b-1][1] + zdjList[c][d-1][1])
+def diferenceCost(adjList, a, b, c, d):
+    ac = 0
+    bd = 0
+    ab = 0
+    cd = 0
+
+    if a > c:
+        ac = adjList[a][c][1]
+    else:
+        ac = adjList[a][c - 1][1]
+
+    if a > b:
+        ab = adjList[a][b][1]
+    else:
+        ab = adjList[a][b - 1][1]
+
+    if b > d:
+        bd = adjList[b][d][1]
+    else:
+        bd = adjList[b][d - 1][1]
+
+    if c > d:
+        cd = adjList[c][d][1]
+    else:
+        cd = adjList[c][d - 1][1]
+
+    result = (ac + bd) - (ab + cd)
     return result
 
 
 def twoOpt(path, adjList):
+    global current_time
+    global elapsed_time
+
+    current_time = time.time()
+    elapsed_time = current_time - start_time
     best = path
     improved = True
-    while improved:
-        improved = False
-        for i in range(1, len(path) - 2):
 
+    while improved and (elapsed_time < seconds):
+        improved = False
+        if elapsed_time > seconds:
+            print(f"ITERATION FINISHED IN:  {int(elapsed_time)} seconds.")
+            break
+
+        for i in range(1, len(path) - 2):
             for j in range(i + 1, len(path)):
                 if j - i == 1:
                     continue
 
-                a = best[i - 1][0]
-                b = best[i][0]
-                c = best[j - 1][0]
-                d = best[j][0]
+                a = best[i - 1]
+                b = best[i]
+                c = best[j - 1]
+                d = best[j]
+
                 if diferenceCost(adjList, a, b, c, d) < 0:
                     best[i:j] = best[j - 1: i - 1: -1]
-                    # print(i, j)
-                    # print('bbbbbbbbb', best[i-1][1])
-                    # print('bbbbbbbbb', adjList[i-2])
-                    # best[i-1][1] = adjList[i-2][i-1][1]
                     improved = True
 
         path = best
+        current_time = time.time()
+        elapsed_time = current_time - start_time
+
     return best
+
+
+def pathCost(path, adjList):
+    cost = 0
+    first = True
+    for u in range(len(path)):
+        origin = path[u]
+        if path[u] == path[0]:
+            if first:
+                destiny = path[u + 1]
+                first = False
+                if origin > destiny:
+                    cost += adjList[origin][destiny][1]
+                else:
+                    cost += adjList[origin][destiny - 1][1]
+        else:
+            destiny = path[u + 1]
+            if origin > destiny:
+                cost += adjList[origin][destiny][1]
+            else:
+                cost += adjList[origin][destiny - 1][1]
+    cost = round(cost, 2)
+    file = open("Results.txt", 'w')
+    file.write(str(cost) + "\n")
+    file.write(str(path))
+    file.close()
+    return cost
+
+
+def findPath():
+    global seconds
+    fileName = input("ARCHIVE NAME: ")
+    file = open(fileName, 'r')
+    seconds = int(input("EXECUTION TIME LIMIT (s): "))
+
+    adjList = BasicDimacs.AdjacencyList(file)
+
+    path = nearestNeighbour(adjList)
+    path = twoOpt(path, adjList)
+
+    print(path)
+    pathCost(path, adjList)
+    file.close()
