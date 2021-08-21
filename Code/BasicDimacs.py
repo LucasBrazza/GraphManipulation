@@ -15,9 +15,9 @@ def AdjacencyList(file):
     line = file.readline()
     while line != '':
         node = int(line.split()[0])
-        list[node].append((int(line.split()[1]), int(line.split()[2])))
+        list[node].append((int(line.split()[1]), float(line.split()[2])))
         node = int(line.split()[1])
-        list[node].append((int(line.split()[0]), int(line.split()[2])))
+        list[node].append((int(line.split()[0]), float(line.split()[2])))
         line = file.readline()
     return list
 
