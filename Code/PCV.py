@@ -34,10 +34,10 @@ def nearestNeighbour(adjList):
     current_time = time.time()
     elapsed_time = current_time - start_time
 
-    u = (0)
-    path = [u]
+    
     notVisited = [i for i in range(len(adjList))]
-    notVisited.pop(0)
+    u = notVisited.pop(0)
+    path = [u]
     smallerNode = None
 
     while notVisited and (elapsed_time < seconds):
